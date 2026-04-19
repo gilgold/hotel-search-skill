@@ -3,7 +3,7 @@ import "dotenv/config";
 import { z } from "zod";
 import { runParallel } from "./util/run-parallel.js";
 import { searchBooking } from "./sources/booking.js";
-import { searchHotelsCom } from "./sources/hotels.js";
+import { searchAgoda } from "./sources/agoda.js";
 import type { SearchInput, SearchOutput } from "./types.js";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD");
@@ -73,13 +73,13 @@ async function main() {
   const keyMissing = !process.env.RAPIDAPI_KEY;
   const sources = [
     { name: "booking.com" as const, fn: searchBooking },
-    { name: "hotels.com" as const, fn: searchHotelsCom },
+    { name: "agoda.com" as const, fn: searchAgoda },
   ];
 
   const outcome = await runParallel(sources, input);
 
   if (keyMissing) {
-    process.stderr.write("warning: RAPIDAPI_KEY not set — booking.com and hotels.com will have failed\n");
+    process.stderr.write("warning: RAPIDAPI_KEY not set — booking.com and agoda.com will have failed\n");
   }
 
   const output: SearchOutput = {

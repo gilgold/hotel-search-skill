@@ -48,7 +48,7 @@ Stdout is JSON matching `SearchOutput`:
   "query": { ...echoed input... },
   "results": [
     {
-      "source": "booking.com" | "hotels.com",
+      "source": "booking.com" | "agoda.com",
       "name": string,
       "rating": number | null,          // 0-10 normalized
       "ratingScale": "0-5" | "0-10",    // original scale
@@ -77,7 +77,7 @@ Stdout is JSON matching `SearchOutput`:
 ```
 <Hotel Name>
   - booking.com: $<price>/night, <rating>/10, <link>
-  - hotels.com: $<price>/night, <rating>/10, <link>
+  - agoda.com: $<price>/night, <rating>/10, <link>
 ```
 
 3. Both sources here rate on a 0-10 scale natively, so present `rating` as `<N>/10`.
@@ -101,7 +101,7 @@ Then tell the user something like:
 
 > **Hilton Paris Opera**
 >   - booking.com: $513/night, 7.6/10, https://www.booking.com/hotel/fr/54642.html
->   - hotels.com: $498/night, 8.0/10, https://www.hotels.com/ho...
+>   - agoda.com: $498/night, 8.0/10, https://www.agoda.com/ho...
 >
 > **La Demeure Montaigne**
 >   - booking.com: $685/night, 9.0/10, https://www.booking.com/hotel/fr/7786014.html
