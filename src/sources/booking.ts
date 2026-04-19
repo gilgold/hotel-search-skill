@@ -90,7 +90,7 @@ function mapHotel(h: BookingHotel, input: SearchInput): HotelResult | null {
   const name = prop?.name ?? "";
   if (!name) return null;
 
-  const hotelId = h.hotel_id ?? prop?.ufi;
+  const hotelId = h.hotel_id;
   const grossPrice = prop?.priceBreakdown?.grossPrice;
   const priceTotal = grossPrice?.value ?? null;
   const n = nights(input);
@@ -101,9 +101,11 @@ function mapHotel(h: BookingHotel, input: SearchInput): HotelResult | null {
     prop?.currency ??
     input.currency;
 
-  const orderLink = hotelId
-    ? `https://www.booking.com/hotel/xx/${hotelId}.html`
-    : "https://www.booking.com/";
+  const countryCode = prop?.countryCode?.toLowerCase();
+  const orderLink =
+    hotelId && countryCode
+      ? `https://www.booking.com/hotel/${countryCode}/${hotelId}.html`
+      : "https://www.booking.com/";
 
   return {
     source: "booking.com",
