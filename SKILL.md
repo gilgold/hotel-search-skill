@@ -1,11 +1,11 @@
 ---
 name: hotel-search
-description: Search hotels across Booking.com and Hotels.com in one call. Use when the user asks about hotel prices, availability, or wants to compare options across sites. Returns a flat list of per-site results; agent groups by hotel name when presenting.
+description: Search hotels across Booking.com and Agoda in one call, including Israel destinations. Use when the user asks about hotel prices, availability, or wants to compare options across sites. Returns a flat list of per-site results; agent groups by hotel name when presenting.
 ---
 
 # Hotel Search
 
-Searches Booking.com and Hotels.com in parallel and returns prices, ratings, and direct booking links.
+Searches Booking.com and Agoda in parallel and returns prices, ratings, and direct booking links.
 
 ## When to use
 
@@ -83,7 +83,7 @@ Stdout is JSON matching `SearchOutput`:
 3. Both sources here rate on a 0-10 scale natively, so present `rating` as `<N>/10`.
 4. If `errors[]` is non-empty, tell the user which sources failed after listing results.
 5. Sort hotels by best combined rating or by lowest price — pick what fits the user's question.
-6. Hotels.com's upstream API is occasionally flaky (intermittent 400/502). If only Booking results come back, mention that Hotels.com failed and suggest the user rerun if they want both.
+6. Agoda returns ~10-15 hotels per search (fewer than Booking's ~20) and takes ~5-10s vs Booking's ~3s. If Agoda fails, booking results still return — tell the user and suggest rerunning.
 
 ## Error handling
 
@@ -106,4 +106,4 @@ Then tell the user something like:
 > **La Demeure Montaigne**
 >   - booking.com: $685/night, 9.0/10, https://www.booking.com/hotel/fr/7786014.html
 >
-> (Hotels.com had 20 additional results but didn't overlap with Booking's list here.)
+> (Agoda had additional results but didn't overlap with Booking's list here.)
