@@ -1,4 +1,4 @@
-export type SourceName = "booking.com" | "hotels.com" | "daka90";
+export type SourceName = "booking.com" | "hotels.com";
 
 export type SearchInput = {
   destination: string;
