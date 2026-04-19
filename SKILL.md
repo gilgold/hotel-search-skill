@@ -1,6 +1,6 @@
 ---
 name: hotel-search
-description: Search hotels across Booking.com, Agoda, and (optionally, for Israel) Daka90. Covers international and Israeli destinations. Use when the user asks about hotel prices, availability, or wants to compare options across sites. Booking and Agoda come from a CLI; Daka90 requires the agent's built-in browser because it's behind Imperva WAF.
+description: Search hotels across Booking.com, Agoda, and (optionally, for Israel) Daka90. Covers international and Israeli destinations. Use when the user asks about hotel prices, availability, or wants to compare options across sites. Booking and Agoda come from a CLI with browser fallback if the CLI fails; Daka90 always uses the agent's built-in browser because it's behind Imperva WAF.
 ---
 
 # Hotel Search
@@ -141,12 +141,55 @@ When skipping, just present CLI results and note that Daka90 wasn't checked.
 6. Sort hotels by best combined rating or by lowest price — pick what fits the user's question.
 7. Agoda returns ~10-15 hotels per search (fewer than Booking's ~20) and takes ~5-10s vs Booking's ~3s. If Agoda fails, Booking results still return — tell the user and suggest rerunning.
 
+## Step 3 — Browser fallback when a CLI source fails
+
+If `errors[]` contains an entry for `booking.com` or `agoda.com`, fall back to that site's public search page via your built-in browser. Same principle as Daka90: the browser can navigate sites the CLI can't reach (flaky wrappers, rate limits, temporary outages).
+
+### Booking.com browser search
+
+URL template:
+```
+https://www.booking.com/searchresults.html?ss={destination-url-encoded}&checkin={YYYY-MM-DD}&checkout={YYYY-MM-DD}&group_adults={N}&no_rooms={N}&group_children={N}&selected_currency={XXX}
+```
+
+Example:
+```
+https://www.booking.com/searchresults.html?ss=Eilat&checkin=2026-05-01&checkout=2026-05-03&group_adults=2&no_rooms=1&group_children=0&selected_currency=ILS
+```
+
+Scrape each hotel card: name, price per night, review score (0-10), booking link (the hotel's `/hotel/{country-code}/{slug}.html` href on the card), any badges like "Breakfast included".
+
+### Agoda browser search
+
+URL template (destination as free text — Agoda resolves it server-side):
+```
+https://www.agoda.com/search?textToSearch={destination-url-encoded}&checkIn={YYYY-MM-DD}&checkOut={YYYY-MM-DD}&adults={N}&rooms={N}&children={N}
+```
+
+Example:
+```
+https://www.agoda.com/search?textToSearch=Eilat&checkIn=2026-05-01&checkOut=2026-05-03&adults=2&rooms=1&children=0
+```
+
+Scrape each hotel card: name, price (inclusive of taxes is shown by default), review score (0-10), booking link, neighborhood/city, any room-type notes.
+
+### Fallback decision logic
+
+For each CLI source with an error:
+1. Check if browser control is available. If not, skip the fallback and tell the user the source failed.
+2. Navigate to the browser-search URL for that source with the same query parameters.
+3. Scrape the top ~10-20 results.
+4. Merge them into the result set with the appropriate `source` field (`"booking.com"` or `"agoda.com"`), same as CLI results would.
+5. Note to the user that those results came from the site's public search (may be slightly different from API results — e.g., rounding, price breakdown).
+
+Never attempt the fallback when the CLI source succeeded — it would just duplicate results and slow the response.
+
 ## Error handling
 
-- If a CLI source fails, the other still returns. `errors[]` records the failure.
-- If both CLI sources fail, `results` is empty — tell the user and include the error messages.
-- Missing `RAPIDAPI_KEY` → both CLI sources fail with "RAPIDAPI_KEY is not set".
-- If the Daka90 browser step fails or the WAF challenge won't resolve, skip it silently (or mention to the user) — the CLI results are still useful on their own.
+- If a CLI source fails: try the browser fallback for that source (Step 3). If the fallback also fails or isn't possible, tell the user that source couldn't be reached.
+- If both CLI sources fail AND both fallbacks fail: tell the user, include the error messages, suggest they retry later.
+- Missing `RAPIDAPI_KEY` → both CLI sources fail with "RAPIDAPI_KEY is not set". Fallbacks still work since they don't need the key.
+- If the Daka90 browser step fails or the WAF challenge won't resolve, skip it silently (or mention to the user) — the other sources are still useful on their own.
 
 ## Example flow
 
